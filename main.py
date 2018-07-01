@@ -8,28 +8,29 @@ import smtplib
 
 import dropbox 
 
-import config 
+import config
 
-path = argv
+script, path = argv
+
+failure_notification =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
+To: DirectoryBackup User <{config.smtp_sendto}>
+Subject: DirectoryBackup Failed
+
+Backup of "{path}" failed.
+
+"""
 
 dbx = dropbox.Dropbox(config.dbxAccount)
-dbx.users_get_current_account()
-print(dbx.users_get_current_account())
+# dbx.users_get_current_account()
+# print(dbx.users_get_current_account())
 
 
 def backup():
-    pass
+    with open(f'{path}', mode='rb') as f:
+        dbx.files_upload(f.read(), path=f'/Apps/DirectoryBackup/{path}')
 
 def notification():
     ''' Sends an email notification when the backup fails for any reason.'''
-
-    message = f"""From: DirectoryBackup <{config.smtp_sendfrom}>
-        To: <{config.smtp_sendto}>
-        Subject: SMTP e-mail test
-
-        This is a test e-mail notification.
-
-    """
 
     # Istantiate smtplib & log in if needed 
     # SMTP_SSL is used here -- allow configuration for insecure SMTP servers later?
@@ -37,12 +38,12 @@ def notification():
         notify = smtplib.SMTP_SSL(host=config.smtp_host, port=config.smtp_port)
         if config.smtp_auth_req == 1:
             notify.login(config.smtp_username, config.smtp_password)
-        notify.sendmail(config.smtp_sendfrom, config.smtp_sendto, message)
-        print("Message sent... maybe.")
+        notify.sendmail(config.smtp_sendfrom, config.smtp_sendto, failure_notification)
+        print("Notification sent.")
 
     except:
-        print("Failed to send message.")
+        print("Failed to send notification.")
         exit(1)
     
 if __name__ == '__main__':
-    notification()
+    backup()
