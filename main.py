@@ -25,7 +25,7 @@ def backup():
             file_path = os.path.join(dirName, file)
 
             try:
-                remote_path = dirName.replace(f'{requested_path}', '')
+                remote_path = dirName.replace(requested_path, '')
                 remote_path_correction = ''
                 if remote_path != '':
                     remote_path_winfix = remote_path.replace('\\', '/') # stupid fucking Windows
