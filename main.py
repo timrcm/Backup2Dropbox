@@ -32,7 +32,7 @@ def backup():
                     remote_path_correction = remote_path_winfix.replace('//', '/')
                     remote_path_correction += '/'
 
-                with open(f'{file_path}', mode='rb') as f:
+                with open(file_path, mode='rb') as f:
 
                     # Ugly spaghetti fix for pathing issues caused by the Windows fix
                     if remote_path_correction == '':
