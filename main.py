@@ -1,36 +1,50 @@
-# Backup2Dropbox
+# DirBak
 # Takes an environment path and backs it up to Dropbox
 # 7/1/2018 TimRCM
 
-from sys import argv
 import datetime
+import os
 import smtplib
+from sys import argv
 
-import dropbox 
+import dropbox
 
 import config
 
-script, path = argv
-
-failure_notification =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
-To: DirectoryBackup User <{config.smtp_sendto}>
-Subject: DirectoryBackup Failed
-
-Backup of "{path}" failed.
-
-"""
-
+script, name, requested_path = argv
 dbx = dropbox.Dropbox(config.dbxAccount)
-# dbx.users_get_current_account()
-# print(dbx.users_get_current_account())
 
 
 def backup():
-    with open(f'{path}', mode='rb') as f:
-        dbx.files_upload(f.read(), path=f'/Apps/DirectoryBackup/{path}')
+    '''Initiates a backup of the given path'''
 
-def notification():
+    timestamp = '{:%Y-%m-%d %H-%M-%S}'.format(datetime.datetime.now())
+
+    for dirName, subdirList, fileList in os.walk(requested_path):
+        for directory in subdirList:
+            for file in fileList:
+                file_path = os.path.join(dirName, file)
+                try:
+                    with open(f'{file_path}', mode='rb') as f:
+                        dbx.files_upload(f.read(), path=f'/{name}/{timestamp}/{directory}/{file}')
+                        print(f"Uploaded '{name}': {file_path} at {timestamp}")
+                except Exception as err:
+                    print(f"Failed to upload {file}, {err}")
+                    notification(file_path, timestamp, err)
+
+
+def notification(file_path, timestamp, err):
     ''' Sends an email notification when the backup fails for any reason.'''
+
+    failure_notification =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
+To: DirBak User <{config.smtp_sendto}>
+Subject: DirBak Job {name} failed
+
+Backup of "{file_path}" failed at {timestamp}
+
+Error message: {err}
+
+"""
 
     # Istantiate smtplib & log in if needed 
     # SMTP_SSL is used here -- allow configuration for insecure SMTP servers later?
@@ -45,5 +59,6 @@ def notification():
         print("Failed to send notification.")
         exit(1)
     
+
 if __name__ == '__main__':
     backup()
