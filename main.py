@@ -25,15 +25,22 @@ def backup():
             file_path = os.path.join(dirName, file)
 
             try:
-                remote_path = dirName.strip(requested_path)
+                remote_path = dirName.replace(f"{requested_path}", '')
                 remote_path_correction = ''
                 if remote_path != '':
-                    remote_path_correction = remote_path.replace('\\', '/') # stupid fucking Windows...
+                    remote_path_winfix = remote_path.replace('\\', '/') # stupid fucking Windows
+                    remote_path_correction = remote_path_winfix.replace('//', '/')
                     remote_path_correction += '/'
-                    
-                tester=f'/{name}/{timestamp}/{remote_path_correction}{file}'
+
                 with open(f'{file_path}', mode='rb') as f:
-                    dbx.files_upload(f.read(), path=f'/{name}/{timestamp}/{remote_path_correction}{file}')
+
+                    # Ugly spaghetti fix for pathing issues caused by the Windows fix
+                    if remote_path_correction == '':
+                        pathfixer = '/'
+                    else:
+                        pathfixer = ''
+
+                    dbx.files_upload(f.read(), path=f'/{name}/{timestamp}{pathfixer}{remote_path_correction}{file}')
                 print(f"Uploaded '{name}': {file_path} at {timestamp}")
 
             except Exception as err:
