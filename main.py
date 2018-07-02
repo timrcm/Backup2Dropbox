@@ -25,7 +25,7 @@ def backup():
             file_path = os.path.join(dirName, file)
 
             try:
-                remote_path = dirName.replace(f"{requested_path}", '')
+                remote_path = dirName.replace(f'{requested_path}', '')
                 remote_path_correction = ''
                 if remote_path != '':
                     remote_path_winfix = remote_path.replace('\\', '/') # stupid fucking Windows
@@ -44,7 +44,7 @@ def backup():
                 print(f"Uploaded '{name}': {file_path} at {timestamp}")
 
             except Exception as err:
-                print(f"Failed to upload {file}, {err}")
+                print(f'Failed to upload {file}, {err}')
                 notification(file_path, timestamp, err)
 
 
@@ -66,10 +66,10 @@ Error message: {err}"""
         if config.smtp_auth_req == 1:
             notify.login(config.smtp_username, config.smtp_password)
         notify.sendmail(config.smtp_sendfrom, config.smtp_sendto, failure_notification)
-        print("Notification sent.")
+        print('Notification sent.')
 
     except:
-        print("Failed to send notification.")
+        print('Failed to send notification.')
         exit(1)
     
 
