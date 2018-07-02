@@ -21,16 +21,24 @@ def backup():
     timestamp = '{:%Y-%m-%d %H-%M-%S}'.format(datetime.datetime.now())
 
     for dirName, subdirList, fileList in os.walk(requested_path):
-        for directory in subdirList:
-            for file in fileList:
-                file_path = os.path.join(dirName, file)
-                try:
-                    with open(f'{file_path}', mode='rb') as f:
-                        dbx.files_upload(f.read(), path=f'/{name}/{timestamp}/{directory}/{file}')
-                        print(f"Uploaded '{name}': {file_path} at {timestamp}")
-                except Exception as err:
-                    print(f"Failed to upload {file}, {err}")
-                    notification(file_path, timestamp, err)
+        for file in fileList:
+            file_path = os.path.join(dirName, file)
+
+            try:
+                remote_path = dirName.strip(requested_path)
+                remote_path_correction = ''
+                if remote_path != '':
+                    remote_path_correction = remote_path.replace('\\', '/') # stupid fucking Windows...
+                    remote_path_correction += '/'
+                    
+                tester=f'/{name}/{timestamp}/{remote_path_correction}{file}'
+                with open(f'{file_path}', mode='rb') as f:
+                    dbx.files_upload(f.read(), path=f'/{name}/{timestamp}/{remote_path_correction}{file}')
+                print(f"Uploaded '{name}': {file_path} at {timestamp}")
+
+            except Exception as err:
+                print(f"Failed to upload {file}, {err}")
+                notification(file_path, timestamp, err)
 
 
 def notification(file_path, timestamp, err):
@@ -42,9 +50,7 @@ Subject: DirBak Job {name} failed
 
 Backup of "{file_path}" failed at {timestamp}
 
-Error message: {err}
-
-"""
+Error message: {err}"""
 
     # Istantiate smtplib & log in if needed 
     # SMTP_SSL is used here -- allow configuration for insecure SMTP servers later?
