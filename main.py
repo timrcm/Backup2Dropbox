@@ -4,15 +4,20 @@
 
 import datetime
 import os
-import smtplib
 from sys import argv
 
-import dropbox
+import dropbox as db
 
 import config
+import notifications
 
 script, name, requested_path = argv
-dbx = dropbox.Dropbox(config.dbxAccount)
+dbx = db.Dropbox(config.dbxAccount)
+
+class dropbox(object):
+    # Add functions for backup, sync, restore(?).. 
+    # and add another class for S3 buckets as an alternative target?
+    pass
 
 
 def backup():
@@ -28,7 +33,7 @@ def backup():
                 remote_path = dirName.replace(requested_path, '')
                 remote_path_correction = ''
                 if remote_path != '':
-                    remote_path_winfix = remote_path.replace('\\', '/') # stupid fucking Windows
+                    remote_path_winfix = remote_path.replace('\\', '/') # stupid Windows...
                     remote_path_correction = remote_path_winfix.replace('//', '/')
                     remote_path_correction += '/'
 
@@ -45,33 +50,7 @@ def backup():
 
             except Exception as err:
                 print(f'Failed to upload {file}, {err}')
-                notification(file_path, timestamp, err)
-
-
-def notification(file_path, timestamp, err):
-    ''' Sends an email notification when the backup fails for any reason.'''
-
-    failure_notification =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
-To: DirBak User <{config.smtp_sendto}>
-Subject: DirBak Job {name} failed
-
-Backup of "{file_path}" failed at {timestamp}
-
-Error message: {err}"""
-
-    # Istantiate smtplib & log in if needed 
-    # SMTP_SSL is used here -- allow configuration for insecure SMTP servers later?
-    try: 
-        notify = smtplib.SMTP_SSL(host=config.smtp_host, port=config.smtp_port)
-        if config.smtp_auth_req == 1:
-            notify.login(config.smtp_username, config.smtp_password)
-        notify.sendmail(config.smtp_sendfrom, config.smtp_sendto, failure_notification)
-        print('Notification sent.')
-
-    except:
-        print('Failed to send notification.')
-        exit(1)
-    
+                notifications.smtp(name, file_path, timestamp, err)
 
 if __name__ == '__main__':
     backup()
