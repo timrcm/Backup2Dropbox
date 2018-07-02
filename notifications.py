@@ -6,6 +6,7 @@ import config
 def smtp(name, file_path, timestamp, err):
     ''' Sends an email notification when the backup fails for any reason.'''
 
+    # Find a way to make this message work correctly if appropriate spacing is added. It's ugly.
     failure_notification =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
 To: DirBak User <{config.smtp_sendto}>
 Subject: DirBak Job {name} failed

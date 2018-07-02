@@ -17,8 +17,30 @@ dbx = db.Dropbox(config.dbxAccount)
 class dropbox(object):
     # Add functions for backup, sync, restore(?).. 
     # and add another class for S3 buckets as an alternative target?
-    pass
 
+    def __init__(self):
+        self.name = name
+        self.requested_path = requested_path
+
+    def backup(self):
+        pass
+
+    def sync(self):
+        pass
+
+
+class b2(object):
+
+    def __init(self):
+        self.name = name
+        self.requested_path = requested_path
+
+    def backup(self):
+        pass
+
+    def sync(self):
+        pass
+        
 
 def backup():
     '''Initiates a backup of the given path'''
