@@ -1,5 +1,10 @@
-# Auth token goes here
+# Dropbox auth token goes here
 dbxAccount = ''
+
+# Prune / clean up old backups - not yet functional
+
+cleanup = 0
+copies_to_keep = 30
 
 # Hostname, port, authentication, etc for SMTP notifications 
 

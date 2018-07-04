@@ -6,28 +6,33 @@ import datetime
 import os
 from sys import argv
 
-import dropbox as db
-
 import config
 import notifications
 
 script, target, style, name, requested_path = argv
-dbx = db.Dropbox(config.dbxAccount)
+
 
 def timestamp():
     '''Generates the current timestamp based on system time'''
     return '{:%Y-%m-%d %H-%M-%S}'.format(datetime.datetime.now())
 
+def datestamp():
+    '''Generates the current datestamp based on system time
+    Not currently in use - this may be useful to do basic math on for determining 
+    backup set age for APIs that won't hand over that information'''
+    return '{:%Y%m%d}'.format(datetime.datetime.now())
+
 class dropbox(object):
-    # Add functions for backup, sync, restore(?).. 
-    # and add another class for S3 buckets as an alternative target?
+    '''Utilizes the Dropbox API to performs a backup or sync of a given directory'''
 
     def __init__(self):
+        import dropbox as db
+        self.dbx = db.Dropbox(config.dbxAccount)
+
         self.target = target
         self.style = style
         self.name = name
         self.requested_path = requested_path
-
         self.timestamp = timestamp()
 
         if self.style == "backup":
@@ -36,7 +41,7 @@ class dropbox(object):
             self.sync()
         else:
             self.err = f"Unknown backup style for target {target}."
-            notifications.smtp(self.name, self.requested_path, self.timestamp, self.err)
+            notifications.smtp_error(self.name, self.requested_path, self.timestamp, self.err)
 
     def __call__(self):
         pass
@@ -68,21 +73,38 @@ class dropbox(object):
                         else:
                             self.pathfixer = ''
                         # Upload the given path to a remote Dropbox path 
-                        dbx.files_upload(f.read(), path=f'/{self.name}/{self.timestamp}{self.pathfixer}{self.remote_path_correction}{file}')
+                        self.dbx.files_upload(f.read(), path=f'/{self.name}/{self.timestamp}{self.pathfixer}{self.remote_path_correction}{file}')
                     
                     print(f"Uploaded '{self.name}': {self.file_path} at {self.timestamp}")
 
                 # Send a notification if something failed 
                 except Exception as err:
                     print(f'Failed to upload {file}, {err}')
-                    notifications.smtp(self.name, self.file_path, self.timestamp, err)
+                    notifications.smtp_error(self.name, self.file_path, self.timestamp, err)
 
+        if config.cleanup == 1:
+            self.cleanup()
+        else:
+            print("Cleanup not enabled. Backup job completed.")
 
     def sync(self):
-        pass
+        '''Until I find a cleaner way... this method deletes the old backup set, and then adds a fresh one.
+        This is fairly safe to do with Dropbox's built-in file versioning. There does not appear to be a 
+        native method to do this less destructively with Dropbox's API.'''
 
+        try:
+            self.dbx.files_delete(f'/{self.name}')
+            self.backup()
+        except Exception as err:
+            print(f'Cleanup of {name} failed with the error: {err}.')
+            notifications.smtp_generic(f'''Sync job failed to clean up previous job(s) with the error {err}.
+            Proceeded with fresh backup set anyway - please verify.''')
+            self.backup()
+            
     def cleanup(self):
-        pass
+        '''Not yet functional. Cleans up the backup set based on the configured number of sets to keep.'''
+        x = self.dbx.files_list_folder(f'/{self.name}')
+        print(x)
 
 
 class b2(object):
@@ -92,7 +114,6 @@ class b2(object):
         self.style = style
         self.name = name
         self.requested_path = requested_path
-
         self.timestamp = timestamp()
 
     def __call__(self):
