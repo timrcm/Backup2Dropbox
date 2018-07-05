@@ -44,9 +44,9 @@ class dropbox(object):
             self.err = f"Unknown backup style for target {target}."
             notifications.smtp_error(self.name, self.requested_path, self.timestamp, self.err)
 
-        print(f"DirBak job '{self.name}' completed.")
+        print(f"DirBak job '{self.name} {self.style}' completed.")
         if config.smtp_notify_after_completion == 1:
-            notifications.smtp_completed(self.name, self.error_count)
+            notifications.smtp_completed(self.name, self.style, self.error_count)
 
     def __call__(self):
         pass
