@@ -21,7 +21,7 @@ def smtp_error(name, file_path, timestamp, err):
     ''' Sends an email notification when the backup fails with an error.'''
 
     # Find a way to make this message work correctly if appropriate spacing is added. It's ugly.
-    error_notification =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
+    msg =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
 To: DirBak User <{config.smtp_sendto}>
 Subject: DirBak Job {name} failed
 
@@ -29,7 +29,7 @@ Backup of "{file_path}" failed at {timestamp}
 
 Error message: {err}"""
 
-    smtp(error_notification)
+    smtp(msg)
 
 
 def smtp_generic(msg):
@@ -40,5 +40,17 @@ To: DirBak User <{config.smtp_sendto}>
 Subject: DirBak Notification
 
 {msg}"""
+
+    smtp(msg)
+
+
+def smtp_completed(name, error_count):
+    ''' Sends an email notification on completion of a job '''
+
+    msg =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
+To: DirBak User <{config.smtp_sendto}>
+Subject: DirBak Job Completed
+
+DirBak job '{name}' completed with {error_count} errors."""
 
     smtp(msg)

@@ -34,6 +34,7 @@ class dropbox(object):
         self.name = name
         self.requested_path = requested_path
         self.timestamp = timestamp()
+        self.error_count = 0
 
         if self.style == "backup":
             self.backup()
@@ -42,6 +43,10 @@ class dropbox(object):
         else:
             self.err = f"Unknown backup style for target {target}."
             notifications.smtp_error(self.name, self.requested_path, self.timestamp, self.err)
+
+        print(f"DirBak job '{self.name}' completed.")
+        if config.smtp_notify_after_completion == 1:
+            notifications.smtp_completed(self.name, self.error_count)
 
     def __call__(self):
         pass
@@ -79,13 +84,13 @@ class dropbox(object):
 
                 # Send a notification if something failed 
                 except Exception as err:
+                    self.error_count += 1
                     print(f'Failed to upload {file}, {err}')
                     notifications.smtp_error(self.name, self.file_path, self.timestamp, err)
 
         if config.cleanup == 1:
             self.cleanup()
-        else:
-            print("Cleanup not enabled. Backup job completed.")
+
 
     def sync(self):
         '''Until I find a cleaner way... this method deletes the old backup set, and then adds a fresh one.
@@ -96,11 +101,13 @@ class dropbox(object):
             self.dbx.files_delete(f'/{self.name}')
             self.backup()
         except Exception as err:
+            self.error_count += 1
             print(f'Cleanup of {name} failed with the error: {err}.')
             notifications.smtp_generic(f'''Sync job failed to clean up previous job(s) with the error {err}.
             Proceeded with fresh backup set anyway - please verify.''')
             self.backup()
-            
+
+
     def cleanup(self):
         '''Not yet functional. Cleans up the backup set based on the configured number of sets to keep.'''
         x = self.dbx.files_list_folder(f'/{self.name}')
