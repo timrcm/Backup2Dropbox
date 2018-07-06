@@ -46,7 +46,8 @@ class dropbox(object):
 
         print(f"DirBak job '{self.name} {self.style}' completed.")
         if config.smtp_notify_after_completion == 1:
-            notifications.smtp_completed(self.name, self.style, self.error_count)
+            self.end_time = timestamp()
+            notifications.smtp_completed(self.name, self.style, self.error_count, self.timestamp, self.end_time)
 
     def __call__(self):
         pass

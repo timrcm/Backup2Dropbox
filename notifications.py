@@ -44,13 +44,13 @@ Subject: DirBak Notification
     smtp(msg)
 
 
-def smtp_completed(name, style, error_count):
+def smtp_completed(name, style, error_count, start_time, end_time):
     ''' Sends an email notification on completion of a job '''
 
     msg =  f"""From: DirectoryBackup <{config.smtp_sendfrom}>
 To: DirBak User <{config.smtp_sendto}>
 Subject: DirBak Job Completed
 
-DirBak job '{name} {style}' completed with {error_count} errors."""
+DirBak job '{name} {style}' started at {start_time} & completed at {end_time} with {error_count} errors."""
 
     smtp(msg)
