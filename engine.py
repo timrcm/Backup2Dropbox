@@ -44,10 +44,8 @@ class dropbox(object):
             self.err = f"Unknown backup style for target {target}."
             notifications.smtp_error(self.name, self.requested_path, self.timestamp, self.err)
 
-        print(f"DirBak job '{self.name} {self.style}' completed.")
-        if config.smtp_notify_after_completion == 1:
-            self.end_time = timestamp()
-            notifications.smtp_completed(self.name, self.style, self.error_count, self.timestamp, self.end_time)
+        self.completed()
+
 
     def __call__(self):
         pass
@@ -104,8 +102,7 @@ class dropbox(object):
         except Exception as err:
             self.error_count += 1
             print(f'Cleanup of {name} failed with the error: {err}.')
-            notifications.smtp_generic(f'''Sync job failed to clean up previous job(s) with the error {err}.
-            Proceeded with fresh backup set anyway - please verify.''')
+            notifications.smtp_generic(f'''Sync job failed to clean up previous job(s) with the error {err}. \nProceeded with fresh backup set anyway - please verify.''')
             self.backup()
 
 
@@ -113,6 +110,15 @@ class dropbox(object):
         '''Not yet functional. Cleans up the backup set based on the configured number of sets to keep.'''
         x = self.dbx.files_list_folder(f'/{self.name}')
         print(x)
+
+
+    def completed(self):
+        print(f"DirBak job '{self.name} {self.style}' completed.")
+        if config.smtp_notify_after_completion == 1:
+            self.end_time = timestamp()
+            # self.space_remaining = self.dbx.users_get_space_usage()
+            notifications.smtp_completed(self.name, self.style, self.error_count, self.timestamp, self.end_time)
+
 
 
 class b2(object):
