@@ -15,4 +15,4 @@ smtp_username = ''
 smtp_password = ''
 smtp_sendto = ''
 smtp_sendfrom = ''
-smtp_notify_on_success = 1
+smtp_notify_after_completion = 1
