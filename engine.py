@@ -71,7 +71,7 @@ class dropbox(object):
                         self.remote_path_correction += '/'
 
                     with open(self.file_path, mode='rb') as f:
-                        # Ugly spaghetti fix for pathing issues caused by the Windows fix
+                        # Ugly fix for pathing issues caused by the Windows fix
                         if self.remote_path_correction == '':
                             self.pathfixer = '/'
                         else:
@@ -120,15 +120,15 @@ class dropbox(object):
             notifications.smtp_completed(self.name, self.style, self.error_count, self.timestamp, self.end_time)
 
 
-
 class b2(object):
 
-    def __init__(self):
+    def __init__(self):     
         self.target = target
         self.style = style
         self.name = name
         self.requested_path = requested_path
         self.timestamp = timestamp()
+        self.error_count = 0
 
     def __call__(self):
         pass
