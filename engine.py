@@ -122,7 +122,7 @@ class dropbox(object):
 
 class b2(object):
 
-    def __init__(self):     
+    def __init__(self):
         self.target = target
         self.style = style
         self.name = name
