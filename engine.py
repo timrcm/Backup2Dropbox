@@ -60,24 +60,14 @@ class dropbox(object):
                 try:
                     # Cut out all preceding directories from the remote path
                     self.remote_path = dirName.replace(self.requested_path, '')
-                    self.remote_path_correction = ''
-
-                    # If the remote path is no longer empty (IE if we've entered a subdir)
-                    # replace Windows' backslash nonsense with a forward slash, 
-                    # remove any duplicate forward slashes, and add a trailing forward slash 
-                    if self.remote_path != '':
-                        self.remote_path_winfix = self.remote_path.replace('\\', '/') # stupid Windows...
-                        self.remote_path_correction = self.remote_path_winfix.replace('//', '/')
-                        self.remote_path_correction += '/'
 
                     with open(self.file_path, mode='rb') as f:
-                        # Ugly fix for pathing issues caused by the Windows fix
-                        if self.remote_path_correction == '':
-                            self.pathfixer = '/'
-                        else:
-                            self.pathfixer = ''
-                        # Upload the given path to a remote Dropbox path 
-                        self.dbx.files_upload(f.read(), path=f'/{self.name}/{self.timestamp}{self.pathfixer}{self.remote_path_correction}{file}')
+                        # Path the files will live in on Dropbox
+                        self.dbpath = f'/{self.name}/{self.timestamp}/{self.remote_path}/{file}'
+                        self.dbpath = self.dbpath.replace('\\', '/') # Fix for Windows' silly nonsense 
+                        self.dbpath = self.dbpath.replace('//', '/') # Fix for duplicates caused by the above
+                        # Upload away~
+                        self.dbx.files_upload(f.read(), path=self.dbpath)
                     
                     print(f"Uploaded '{self.name}': {self.file_path} at {self.timestamp}")
 
