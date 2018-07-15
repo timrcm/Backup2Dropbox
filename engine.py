@@ -35,6 +35,7 @@ class dropbox(object):
         self.requested_path = requested_path
         self.timestamp = timestamp()
         self.error_count = 0
+        self.error_log = open('errors.log', 'w')
 
         if self.style == "backup":
             self.backup()
@@ -44,6 +45,7 @@ class dropbox(object):
             self.err = f"Unknown backup style for target {target}."
             notifications.smtp_error(self.name, self.requested_path, self.timestamp, self.err)
 
+        self.error_log.close()
         self.completed()
 
 
@@ -53,16 +55,17 @@ class dropbox(object):
     def backup(self):
         '''Initiates a backup of the given path to Dropbox'''
 
-        for dirName, subdirList, fileList in os.walk(self.requested_path):
-            for file in fileList:
-                self.file_path = os.path.join(dirName, file)
+        for dirpath, dirnames, filenames in os.walk(self.requested_path):
+            for file in filenames:
+                self.file_path = os.path.join(dirpath, file)
 
                 try:
                     # Cut out all preceding directories from the remote path
-                    self.remote_path = dirName.replace(self.requested_path, '')
+                    self.remote_path = dirpath.replace(self.requested_path, '')
 
                     with open(self.file_path, mode='rb') as f:
                         # Path the files will live in on Dropbox
+                        # os.path.join works just fine on a *nix box, but Windows causes issues... 
                         self.dbpath = f'/{self.name}/{self.timestamp}/{self.remote_path}/{file}'
                         self.dbpath = self.dbpath.replace('\\', '/') # Fix for Windows' silly nonsense 
                         self.dbpath = self.dbpath.replace('//', '/') # Fix for duplicates caused by the above
@@ -75,7 +78,7 @@ class dropbox(object):
                 except Exception as err:
                     self.error_count += 1
                     print(f'Failed to upload {file}, {err}')
-                    notifications.smtp_error(self.name, self.file_path, self.timestamp, err)
+                    self.error_log.write(f'Error uploading {self.file_path}: {err}\n\n')
 
         if config.cleanup == 1:
             self.cleanup()
@@ -92,7 +95,7 @@ class dropbox(object):
         except Exception as err:
             self.error_count += 1
             print(f'Cleanup of {name} failed with the error: {err}.')
-            notifications.smtp_generic(f'''Sync job failed to clean up previous job(s) with the error {err}. \nProceeded with fresh backup set anyway - please verify.''')
+            self.error_log.write(f'Sync job failed to clean up previous job(s) with the error: {err}.\n\n')
             self.backup()
 
 

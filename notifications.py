@@ -31,9 +31,14 @@ def smtp_error(name, file_path, timestamp, err):
 
 
 def smtp_completed(name, style, error_count, start_time, end_time):
+    error_log = open('errors.log', 'r')
     '''Sends an email notification on completion of a job'''
     msg =  f"""{headers}
-    DirBak job '{name} {style}' started at {start_time} & completed at {end_time} with {error_count} errors."""
+    DirBak job '{name} {style}' started at {start_time} & completed at {end_time} with {error_count} error(s).
+    
+    Errors encountered (if any): 
+    
+    {error_log.read()}"""
     smtp(msg)
 
 
