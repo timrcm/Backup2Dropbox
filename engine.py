@@ -72,8 +72,8 @@ class dropbox(object):
                         self.dbpath = self.dbpath.replace('\\', '/') # Fix for Windows' silly nonsense 
                         self.dbpath = self.dbpath.replace('//', '/') # Fix for duplicates caused by the above
                         
-                        # Check if the file is greater than 10MB. If so, upload it in chunks.
-                        chunk_size = 10000000 # 10000000 bytes = 10MB
+                        # Check if the file is greater than 50MB. If so, upload it in chunks.
+                        chunk_size = 52428800 # 52428800 bytes = 500MB
                         file_size = os.path.getsize(self.file_path)
 
                         if file_size <= chunk_size:
@@ -102,6 +102,10 @@ class dropbox(object):
         if config.cleanup == 1:
             self.cleanup()
 
+
+    def bigupload(self, chunk_size):
+        '''Handles uploads that must be done in chunks due to being larger than 50MB'''
+        pass
 
     def sync(self):
         '''Until I find a cleaner way... this method deletes the old backup set, and then adds a fresh one.
