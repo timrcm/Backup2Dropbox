@@ -6,6 +6,8 @@ import datetime
 import os
 from sys import argv
 
+import dropbox as db
+
 import config
 import notifications
 
@@ -26,7 +28,7 @@ class dropbox(object):
     '''Utilizes the Dropbox API to performs a backup or sync of a given directory'''
 
     def __init__(self):
-        import dropbox as db
+        
         self.dbx = db.Dropbox(config.dbxAccount)
 
         self.target = target
@@ -69,9 +71,26 @@ class dropbox(object):
                         self.dbpath = f'/{self.name}/{self.timestamp}/{self.remote_path}/{file}'
                         self.dbpath = self.dbpath.replace('\\', '/') # Fix for Windows' silly nonsense 
                         self.dbpath = self.dbpath.replace('//', '/') # Fix for duplicates caused by the above
-                        # Upload away~
-                        self.dbx.files_upload(f.read(), path=self.dbpath)
-                    
+                        
+                        # Check if the file is greater than 10MB. If so, upload it in chunks.
+                        chunk_size = 10000000 # 10000000 bytes = 10MB
+                        file_size = os.path.getsize(self.file_path)
+
+                        if file_size <= chunk_size:
+                            self.dbx.files_upload(f.read(), path=self.dbpath)
+
+                        else:
+                            session_start = self.dbx.files_upload_session_start(f.read(chunk_size))
+                            cursor = db.files.UploadSessionCursor(session_id=session_start.session_id, offset=f.tell())
+                            commit = db.files.CommitInfo(path=self.dbpath)
+
+                            while f.tell() < file_size:
+                                if ((file_size - f.tell()) <= chunk_size):
+                                    self.dbx.files_upload_session_finish(f.read(chunk_size), cursor, commit)
+                                else: 
+                                    self.dbx.files_upload_session_append_v2(f.read(chunk_size), cursor, close=False)
+                                    cursor.offset = f.tell()        
+
                     print(f"Uploaded '{self.name}': {self.file_path} at {self.timestamp}")
 
                 # Send a notification if something failed 
