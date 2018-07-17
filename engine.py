@@ -72,28 +72,18 @@ class dropbox(object):
                         self.dbpath = self.dbpath.replace('\\', '/') # Fix for Windows' silly nonsense 
                         self.dbpath = self.dbpath.replace('//', '/') # Fix for duplicates caused by the above
                         
-                        # Check if the file is greater than 50MB. If so, upload it in chunks.
-                        chunk_size = 52428800 # 52428800 bytes = 500MB
+                        # Check if the file is greater than chunk_size in config.py. If so, upload it in chunks.
                         file_size = os.path.getsize(self.file_path)
 
-                        if file_size <= chunk_size:
+                        if file_size <= config.chunk_size:
                             self.dbx.files_upload(f.read(), path=self.dbpath)
-
                         else:
-                            session_start = self.dbx.files_upload_session_start(f.read(chunk_size))
-                            cursor = db.files.UploadSessionCursor(session_id=session_start.session_id, offset=f.tell())
-                            commit = db.files.CommitInfo(path=self.dbpath)
+                            self.bigupload(f, file_size)   
 
-                            while f.tell() < file_size:
-                                if ((file_size - f.tell()) <= chunk_size):
-                                    self.dbx.files_upload_session_finish(f.read(chunk_size), cursor, commit)
-                                else: 
-                                    self.dbx.files_upload_session_append_v2(f.read(chunk_size), cursor, close=False)
-                                    cursor.offset = f.tell()        
-
+                    # Once the 'try' statement finishes successfully, print that success 
                     print(f"Uploaded '{self.name}': {self.file_path} at {self.timestamp}")
 
-                # Send a notification if something failed 
+                # Print a notification & append the error to the log if something failed 
                 except Exception as err:
                     self.error_count += 1
                     print(f'Failed to upload {file}, {err}')
@@ -103,9 +93,28 @@ class dropbox(object):
             self.cleanup()
 
 
-    def bigupload(self, chunk_size):
+    def bigupload(self, f, file_size):
         '''Handles uploads that must be done in chunks due to being larger than 50MB'''
-        pass
+
+        # Start an upload session to Dropbox
+        session_start = self.dbx.files_upload_session_start(f.read(config.chunk_size))
+        # Keep track of the session and what byte we're at in the upload process
+        cursor = db.files.UploadSessionCursor(session_id=session_start.session_id, offset=f.tell())
+        # Where the uploaded file will go when the session closes
+        commit = db.files.CommitInfo(path=self.dbpath)
+
+        # Continue until no bytes remain in file_size
+        while f.tell() < file_size:
+            # If the file size is LESS than the configured chunk size, finish the upload session
+            if ((file_size - f.tell()) <= config.chunk_size):
+                self.dbx.files_upload_session_finish(f.read(config.chunk_size), cursor, commit)
+
+            # If the file is not less than the configured chunk size, append another chunk
+            # to the file & update the cursor position
+            else: 
+                self.dbx.files_upload_session_append_v2(f.read(config.chunk_size), cursor, close=False)
+                cursor.offset = f.tell()
+
 
     def sync(self):
         '''Until I find a cleaner way... this method deletes the old backup set, and then adds a fresh one.
@@ -129,6 +138,7 @@ class dropbox(object):
 
 
     def completed(self):
+        '''Checks if notifications upon completion are enabled, sending one if so.'''
         print(f"DirBak job '{self.name} {self.style}' completed.")
         if config.smtp_notify_after_completion == 1:
             self.end_time = timestamp()
