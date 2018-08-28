@@ -41,8 +41,10 @@ class dropbox(object):
 
         # Initiate the job
         if self.style == "backup":
+            config.timestamps = 1
             self.backup()
         elif self.style == "sync":
+            config.timestamps = 0
             self.sync()
         else:
             self.err = f"Unknown backup style for target {target}."
