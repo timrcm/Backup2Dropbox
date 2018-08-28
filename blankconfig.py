@@ -18,3 +18,6 @@ smtp_password = ''
 smtp_sendto = ''
 smtp_sendfrom = ''
 smtp_notify_after_completion = 1
+
+# Timestamp each completed backup job directory?
+timestamps = 0

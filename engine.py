@@ -39,6 +39,7 @@ class dropbox(object):
         self.error_count = 0
         self.error_log = open('errors.log', 'w')
 
+        # Initiate the job
         if self.style == "backup":
             self.backup()
         elif self.style == "sync":
@@ -68,7 +69,13 @@ class dropbox(object):
                     with open(self.file_path, mode='rb') as f:
                         # Path the files will live in on Dropbox
                         # os.path.join works just fine on a *nix box, but Windows causes issues... 
-                        self.dbpath = f'/{self.name}/{self.timestamp}/{self.remote_path}/{file}'
+
+                        # Use timestamps? 
+                        # This could probably be handled more gracefully.
+                        if config.timestamps == 1:
+                            self.dbpath = f'/{self.name}/{self.timestamp}/{self.remote_path}/{file}'
+                        elif config.timestamps == 0:
+                            self.dbpath = f'/{self.name}/{self.remote_path}/{file}'
                         self.dbpath = self.dbpath.replace('\\', '/') # Fix for Windows' silly nonsense 
                         self.dbpath = self.dbpath.replace('//', '/') # Fix for duplicates caused by the above
                         
