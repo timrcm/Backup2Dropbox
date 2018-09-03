@@ -17,7 +17,7 @@ smtp_username = ''
 smtp_password = ''
 smtp_sendto = ''
 smtp_sendfrom = ''
-smtp_notify_after_completion = 1
+smtp_always_notify = 0 # Notify on job completion, even if no errors occur
 
 # Timestamp each completed backup job directory?
 timestamps = 0
