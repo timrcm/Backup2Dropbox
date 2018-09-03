@@ -148,9 +148,10 @@ class dropbox(object):
 
     def completed(self):
         '''Checks if notifications upon completion are enabled, sending one if so.'''
-        print(f"DirBak job '{self.name} {self.style}' completed.")
-        if config.smtp_notify_after_completion == 1:
-            self.end_time = timestamp()
+        self.end_time = timestamp()
+        print(f"DirBak job '{self.name} {self.style}' completed at {self.end_time}.")
+        
+        if (config.smtp_always_notify == 1 or self.error_count != 0):
             # self.space_remaining = self.dbx.users_get_space_usage()
             notifications.smtp_completed(self.name, self.style, self.error_count, self.timestamp, self.end_time)
 
