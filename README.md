@@ -8,3 +8,4 @@ To do:
 - Encryption options 
 - GUI for  managing multiple jobs? 
 - Native scheduling instead of relying on cron
+- Pull in the hostname automatically for multi-job segregation 
